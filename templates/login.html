@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login - Meme Sharing Platform</title>
+  <style>
+    body {
+      background: linear-gradient(to right, #6dd5fa, #2980b9);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .container {
+      background-color: #ffffffdd;
+      border-radius: 12px;
+      width: 400px;
+      max-width: 90%;
+      padding: 30px 35px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+    h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      margin-bottom: 25px;
+      color: #34495e;
+    }
+    label {
+      display: block;
+      margin: 15px 0 5px;
+      font-weight: 600;
+      color: #2c3e50;
+      text-align: left;
+    }
+    input {
+      width: 100%;
+      padding: 12px 15px;
+      font-size: 1rem;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+      transition: border-color 0.3s ease;
+    }
+    input:focus {
+      border-color: #3498db;
+      outline: none;
+    }
+    button {
+      margin-top: 25px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      padding: 12px 0;
+      width: 70%;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    .toggle-text {
+      margin: 20px 0 5px;
+      font-weight: 600;
+      color: #2980b9;
+      cursor: pointer;
+      user-select: none;
+    }
+    .message {
+      margin: 15px 0;
+      font-weight: 600;
+      color: red;
+    }
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="message">{{ messages[0] }}</div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Login Form -->
+    <form id="login-form" method="POST" action="{{ url_for('login') }}">
+      <h1>Login</h1>
+      <label for="username">Username</label>
+      <input id="username" name="username" type="text" autocomplete="username" required />
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required />
+      <button type="submit">Login</button>
+      <div>Don't have an account? <span class="toggle-text" id="show-create">Create Account</span></div>
+    </form>
+
+    <!-- Signup Form -->
+    <form id="create-form" method="POST" action="{{ url_for('signup') }}" class="hidden">
+      <h1>Create Account</h1>
+      <label for="new-username">Username</label>
+      <input id="new-username" name="username" type="text" autocomplete="username" required />
+      <label for="new-password">Password</label>
+      <input id="new-password" name="password" type="password" autocomplete="new-password" required />
+      <label for="confirm-password">Confirm Password</label>
+      <input id="confirm-password" name="password_confirm" type="password" autocomplete="new-password" required />
+      <button type="submit">Create Account</button>
+      <div>Already have an account? <span class="toggle-text" id="show-login">Login</span></div>
+    </form>
+  </div>
+  
+  <script>
+    const loginForm = document.getElementById('login-form');
+    const createForm = document.getElementById('create-form');
+    document.getElementById('show-create').addEventListener('click', () => {
+      loginForm.classList.add('hidden');
+      createForm.classList.remove('hidden');
+    });
+    document.getElementById('show-login').addEventListener('click', () => {
+      createForm.classList.add('hidden');
+      loginForm.classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>

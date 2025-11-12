@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Meme Fusion</title>
+<style>
+  /* General */
+  html, body {
+    margin: 0; height: 100%;
+    background-color: #1c1f26;
+    color: #d0d0d6;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  /* Main container & scroll */
+  main {
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+    padding: 1rem 0 72px;
+    scroll-behavior: smooth;
+    display: flex;
+    justify-content: center;
+  }
+  main::-webkit-scrollbar { width:0; background:transparent; }
+  main { scrollbar-width: none; }
+  /* Content width */
+  #content-area {
+    width: 360px;
+  }
+  nav { display:none; }
+
+  #floating-nav {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2c2f3b;
+    border-radius: 32px;
+    display: flex;
+    gap: 32px;
+    padding: 8px 24px;
+    z-index: 100;
+  }
+  #floating-nav button {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    font-size: 28px;
+    cursor: pointer;
+    transition: color 0.3s ease;
+  }
+  #floating-nav button.active, #floating-nav button:hover {
+    color: #7f52ff;
+  }
+  /* Sections */
+  section {
+    display: none;
+  }
+  section.active {
+    display: block;
+  }
+  /* Meme card style */
+  .meme-card {
+    position: relative;
+    margin: 1.5rem 0 3rem;
+    border-radius: 18px;
+    display: flex;
+    justify-content: center;
+  }
+  .meme-frame {
+    border-radius: 18px;
+    padding: 1rem;
+    background-color: var(--meme-bg, #fffff);
+    min-height: 350px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  h2.meme-title {
+    color: #9a7cff;
+    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+  }
+  .meme-image, .meme-video {
+    max-height: 210px;
+    max-width: 100%;
+    border-radius: 12px;
+    object-fit: contain;
+    margin-bottom: 0.5rem;
+  }
+  .meme-info {
+    font-weight: 600;
+    color: #a1a3ac;
+    align-self: flex-start;
+    margin-top: auto;
+  }
+  .meme-reactions-summary {
+    display: flex; justify-content: center; gap: 15px;
+    padding-top: 6px; color: #9a7cff; font-weight: 600;
+  }
+  /* Reaction buttons and menu */
+  .reaction-wrapper {
+    position: absolute;
+    top: 50%;
+    right: 1.5rem;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    z-index: 50;
+  }
+  .reaction-toggle-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #bbb;
+    font-size: 28px;
+    transition: color 0.3s ease;
+    line-height: 0;
+  }
+  .reaction-toggle-btn:hover {
+    color: #9a7cff;
+  }
+  .reaction-menu {
+    display: none;
+    flex-direction: row;
+    background: rgba(58,59,76,0.95);
+    border-radius: 16px;
+    padding: 8px 12px;
+    box-shadow: 0 0 20px rgba(163,124,255,0.7);
+    margin-top: 6px;
+    white-space: nowrap;
+  }
+  .reaction-menu.active {
+    display: flex;
+  }
+  .reaction-emoji {
+    font-size: 28px;
+    cursor: pointer;
+    user-select: none;
+    margin: 0 8px;
+    transition: transform 0.2s ease;
+  }
+  .reaction-emoji:hover {
+    transform: scale(1.3);
+  }
+  /* Comments */
+  .message-toggle-btn {
+    background: transparent;
+    border: none;
+    color: #8e84c7;
+    cursor: pointer;
+    font-size: 22px;
+    margin-top: 6px;
+  }
+  .comments-section {
+    display: none;
+    background: #4a4f64;
+    border-radius: 12px;
+    color: #d1d4db;
+    font-size: 14px;
+    margin-top: 12px;
+    max-height: 150px;
+    overflow-y: auto;
+    padding: 0.8rem;
+    width: 100%;
+  }
+  .comments-section.active {
+    display: block;
+  }
+  .comment-input-container {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .comment-input {
+    flex-grow: 1;
+    background: #5b6180;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    color: #e0e2eb;
+    font-size: 14px;
+  }
+  .comment-send-btn {
+    background: #7f52ff;
+    border: none;
+    color: #f2f4ff;
+    padding: 8px 14px;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .comment-send-btn:hover {
+    background: #a27cff;
+  }
+  /* Upload, profile, discover shared style */
+  #upload, #profile, #discover {
+    max-width: 400px;
+    margin: 1rem auto;
+    background: #333a56;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    color: #eaeaea;
+  }
+  #profile img, .user-info img {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #a27cff;
+    display: block;
+    margin: 0 auto 1rem auto;
+  }
+  #profile h2 {
+    text-align: center;
+  }
+  #profile .counts {
+    display: flex;
+    justify-content: space-around;
+    font-weight: 600;
+  }
+  a.logout-btn {
+    display: block;
+    text-align: center;
+    margin-top: 1rem;
+    color: #a27cff;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  a.logout-btn:hover {
+    text-decoration: underline;
+  }
+  button.follow-btn {
+    width: 100%;
+    margin: 1rem 0;
+    background: #7f52ff;
+    border: none;
+    color: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 700;
+  }
+  button.follow-btn.following {
+    background: #a27cff;
+  }
+  button.follow-btn:hover {
+    background: #a27cff;
+  }
+  /* Discover styles */
+  #discover input[type="text"] {
+    width: 100%;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    border-radius: 8px;
+    border: none;
+    background: #424659;
+    color: #f0f0f3;
+    font-size: 1rem;
+  }
+  .user-result {
+    padding: 10px;
+    border-bottom: 1px solid #556182;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+  }
+  .user-result:hover {
+    background: #4a5081;
+  }
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .user-info img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #7f52ff;
+    object-fit: cover;
+  }
+  .user-name {
+    font-weight: 600;
+    color: #d0d0d6;
+  }
+  #user-memes {
+    margin-top: 1rem;
+    max-height: 250px;
+    overflow-y: auto;
+  }
+  #user-memes ul {
+    list-style: none;
+    padding-left: 0;
+  }
+  #user-memes li {
+    margin-bottom: 6px;
+  }
+</style>
+</head>
+<body>
+<main>
+  <div id="content-area">
+
+    <section id="home" class="active">
+      <!-- Search form -->
+      <form id="search-form" role="search" style="display:flex; gap:8px; margin-bottom:1rem;">
+        <input type="search" id="search-bar" name="q" placeholder="Search memes or users..." 
+          aria-label="Search memes or users" required style="flex-grow:1; padding:8px 12px; border-radius:6px; border:1px solid #ccc; font-size:1rem;" />
+        <button type="submit" style="padding:8px 16px; border:none; background:#7f52ff; color:white; border-radius:6px; cursor:pointer; font-weight:bold;">Search</button>
+      </form>
+      <div id="meme-feed">
+        {% for meme in memes %}
+        <div class="meme-card" data-meme-id="{{ meme.id }}">
+          <div class="meme-frame" style="--meme-bg: {{ meme.background_color | default('#2a2a3e') }}">
+            <h2 class="meme-title">{{ meme.title }}</h2>
+            {% if meme.meme_type == 'Text' %}
+            <div class="meme-text">{{ meme.meme_text }}</div>
+            {% else %}
+            {% if meme.filename %}
+            {% if meme.meme_type == 'Video' %}
+            <video class="meme-video" controls src="{{ url_for('uploaded_file', filename=meme.filename) }}"></video>
+            {% else %}
+            <img class="meme-image" src="{{ url_for('uploaded_file', filename=meme.filename) }}" alt="Meme by {{ meme.username }}" />
+            {% endif %}
+            {% endif %}
+            {% endif %}
+            <div class="meme-info">{{ meme.username }} • {{ meme.category }}</div>
+
+            <div class="meme-reactions-summary">
+              <div>❤️ {{ meme.reactions_counts.get('❤️',0) }}</div>
+              <div>😂 {{ meme.reactions_counts.get('😂',0) }}</div>
+              <div>😮 {{ meme.reactions_counts.get('😮',0) }}</div>
+              <div>😢 {{ meme.reactions_counts.get('😢',0) }}</div>
+              <div>😡 {{ meme.reactions_counts.get('😡',0) }}</div>
+            </div>
+
+            <div class="reaction-wrapper" aria-label="Reactions">
+              <button class="reaction-toggle-btn">&#x2764;</button>
+              <div class="reaction-menu" aria-label="Reaction menu">
+                <span class="reaction-emoji" title="Love" tabindex="0">❤️</span>
+                <span class="reaction-emoji" title="Laugh" tabindex="0">😂</span>
+                <span class="reaction-emoji" title="Surprised" tabindex="0">😮</span>
+                <span class="reaction-emoji" title="Sad" tabindex="0">😢</span>
+                <span class="reaction-emoji" title="Angry" tabindex="0">😡</span>
+              </div>
+              <button class="message-toggle-btn" aria-label="Toggle comments">&#128172;</button>
+            </div>
+
+            <div class="comments-section">
+              {% for comment in meme.comments %}
+              <p><strong>{{ comment.username }}:</strong> {{ comment.comment }}</p>
+              {% endfor %}
+              {% if logged_in %}
+              <div class="comment-input-container">
+                <input class="comment-input" type="text" placeholder="Add a comment..." />
+                <button class="comment-send-btn" onclick="sendComment(this, {{ meme.id }})">Send</button>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section id="upload">
+      <form id="upload-form" enctype="multipart/form-data" method="POST" action="{{ url_for('upload') }}">
+        <label for="meme_title">Meme Title:</label>
+        <input id="meme_title" name="meme_title" type="text" required placeholder="Enter meme title..." />
+
+        <label for="background_color">Background Color:</label>
+        <input type="color" id="background_color" name="background_color" value="#2a2a3e" />
+
+        <label for="meme_type">Type:</label>
+        <select id="meme_type" name="meme_type" required>
+          <option value="">Select Type</option>
+          <option value="Text">Text</option>
+          <option value="Image">Image</option>
+          <option value="GIF">GIF</option>
+          <option value="Video">Video</option>
+        </select>
+
+        <div id="text-meme-field" style="display:none;">
+          <label for="meme_text">Text Meme:</label>
+          <textarea id="meme_text" name="meme_text" rows="2" placeholder="Enter your text meme here..."></textarea>
+        </div>
+
+        <div id="file-upload-field" style="display:none;">
+          <label for="upload-input">Choose File:</label>
+          <input type="file" id="upload-input" name="image" accept="image/*,video/*,image/gif" />
+        </div>
+
+        <label for="category">Category:</label>
+        <select id="category" name="category" required>
+          <option value="">Select Category</option>
+          <option value="Tech">Tech</option>
+          <option value="Funny">Funny</option>
+          <option value="Sports">Sports</option>
+          <option value="News">News</option>
+          <option value="Other">Other</option>
+        </select>
+
+        <button type="submit">Upload</button>
+        <button type="button" onclick="toggleUploadForm(false)">Cancel</button>
+      </form>
+    </section>
+
+    <section id="profile">
+      <img src="{{ url_for('uploaded_file', filename=user_profile.picture_url) if user_profile.picture_url else url_for('static', filename='default-profile.png') }}" alt="Profile Picture" />
+      <h2>{{ user_profile.username }}</h2>
+      <div class="counts">
+        <div><strong>{{ user_profile.followers_count }}</strong><br />Followers</div>
+        <div><strong>{{ user_profile.likes_count }}</strong><br />Likes</div>
+        <div><strong>{{ user_profile.total_reactions_count }}</strong><br />Reactions</div>
+      </div>
+      <button class="follow-btn" id="follow-btn"></button>
+      <h3>Posts</h3>
+      <ul>
+        {% for post in user_profile.memes %}
+        <li>{{ post.title }}</li>
+        {% endfor %}
+      </ul>
+      <form method="POST" action="{{ url_for('update_profile_pic') }}" enctype="multipart/form-data">
+        <input type="file" name="profile_pic" accept="image/*" required />
+        <button type="submit" style="margin-top: 0.5rem;">Change Profile Picture</button>
+      </form>
+      <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+    </section>
+
+    <section id="discover">
+      <input type="text" id="discover-search" placeholder="Search users..." autocomplete="off" />
+      <div id="discover-results"></div>
+      <div id="user-memes"></div>
+    </section>
+
+  </div>
+</main>
+
+<div id="floating-nav" aria-label="Main Navigation">
+  <button id="btn-home" class="active" title="Home">&#8962;</button>
+  <button id="btn-upload" title="Upload">&#43;</button>
+  <button id="btn-profile" title="Profile">&#128100;</button>
+</div>
+
+<script>
+// Navigation buttons and section control
+const btnHome = document.getElementById('btn-home');
+const btnUpload = document.getElementById('btn-upload');
+const btnProfile = document.getElementById('btn-profile');
+
+const sections = {
+  home: document.getElementById('home'),
+  upload: document.getElementById('upload'),
+  profile: document.getElementById('profile'),
+  discover: document.getElementById('discover'),
+};
+
+function setActiveNav(activeButton, activeSection) {
+  [btnHome, btnUpload, btnProfile].forEach(btn => btn.classList.remove('active'));
+  activeButton.classList.add('active');
+  Object.values(sections).forEach(sec => sec.style.display = 'none');
+  activeSection.style.display = 'block';
+}
+
+btnHome.addEventListener('click', () => setActiveNav(btnHome, sections.home));
+btnUpload.addEventListener('click', () => setActiveNav(btnUpload, sections.upload));
+btnProfile.addEventListener('click', () => setActiveNav(btnProfile, sections.profile));
+btnDiscover.addEventListener('click', () => setActiveNav(btnDiscover, sections.discover));
+
+// Upload form inputs toggle
+document.getElementById('meme_type').addEventListener('change', function() {
+  const val = this.value;
+  document.getElementById('text-meme-field').style.display = val === 'Text' ? 'block' : 'none';
+  document.getElementById('file-upload-field').style.display = ['Image', 'GIF', 'Video'].includes(val) ? 'block' : 'none';
+});
+document.getElementById('meme_type').dispatchEvent(new Event('change'));
+
+// Reaction toggle menu
+document.querySelectorAll('.reaction-toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    btn.nextElementSibling.classList.toggle('active');
+  });
+});
+
+// Reaction click AJAX
+document.querySelectorAll('.reaction-emoji').forEach(emoji => {
+  emoji.addEventListener('click', e => {
+    const reaction = e.target.textContent;
+    const memeCard = e.target.closest('.meme-card');
+    const memeId = memeCard.getAttribute('data-meme-id');
+    fetch(`/react/${memeId}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({reaction})
+    }).then(res => res.json()).then(data => {
+      if(data.status === 'ok') {
+        alert(`Reacted with ${reaction}`);
+        emoji.parentElement.classList.remove('active');
+      } else {
+        alert(data.message);
+      }
+    });
+  });
+});
+
+// Comments section toggle
+document.querySelectorAll('.message-toggle-btn').forEach(btn => {
+  btn.addEventListener('click', e => {
+    const memeCard = e.target.closest('.meme-card');
+    const commentsSection = memeCard.querySelector('.comments-section');
+    document.querySelectorAll('.comments-section.active').forEach(sec => {
+      if(sec !== commentsSection) sec.classList.remove('active');
+    });
+    commentsSection.classList.toggle('active');
+  });
+});
+
+// Send comment AJAX
+function sendComment(button, memeId) {
+  const input = button.previousElementSibling;
+  const comment = input.value.trim();
+  if(!comment) {
+    alert('Please enter a comment.');
+    return;
+  }
+  fetch(`/comments/${memeId}`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({comment})
+  }).then(res => res.json()).then(data => {
+    if(data.status === 'ok'){
+      alert('Comment sent!');
+      input.value = '';
+    } else {
+      alert(data.message);
+    }
+  });
+}
+
+// Meme search with submit and prefix match
+document.getElementById('search-form').addEventListener('submit', function(event) {
+  event.preventDefault();
+  const query = document.getElementById('search-bar').value.trim().toLowerCase();
+
+  if (!query) {
+    document.querySelectorAll('.meme-card').forEach(card => card.style.display = '');
+    return;
+  }
+
+  const queryWords = query.split(/\s+/);
+
+  document.querySelectorAll('.meme-card').forEach(card => {
+    const title = card.querySelector('.meme-title')?.textContent.toLowerCase() || '';
+    const username = card.querySelector('.meme-info')?.textContent.toLowerCase() || '';
+    const matches = queryWords.some(word => title.startsWith(word) || username.startsWith(word));
+    card.style.display = matches ? '' : 'none';
+  });
+});
+
+const followBtn = document.getElementById('follow-btn');
+const profileUsername = "{{ user_profile.username }}";
+const loggedInUser = "{{ username }}";
+
+if(followBtn && loggedInUser && profileUsername !== loggedInUser) {
+  fetch(`/is_following/${profileUsername}`).then(r => r.json()).then(data => updateFollowBtn(data.is_following));
+} else if(followBtn) {
+  followBtn.style.display = 'none';
+}
+
+function updateFollowBtn(isFollowing) {
+  if(!followBtn) return;
+  if(isFollowing){
+    followBtn.textContent = 'Unfollow';
+    followBtn.onclick = unfollow;
+  } else {
+    followBtn.textContent = 'Follow';
+    followBtn.onclick = follow;
+  }
+}
+
+function follow() {
+  fetch(`/follow/${profileUsername}`, {method:'POST'})
+    .then(r => r.json()).then(data => {
+      if(data.status === 'ok') updateFollowBtn(true);
+      else alert(data.message);
+    });
+}
+
+function unfollow() {
+  fetch(`/unfollow/${profileUsername}`, {method:'POST'})
+    .then(r => r.json()).then(data => {
+      if(data.status === 'ok') updateFollowBtn(false);
+      else alert(data.message);
+    });
+}
+
+// Discover user search & follow/unfollow
+const discoverInput = document.getElementById('discover-search');
+const discoverResults = document.getElementById('discover-results');
+const userMemesContainer = document.getElementById('user-memes');
+let debounceTimeout;
+
+discoverInput.addEventListener('input', () => {
+  clearTimeout(debounceTimeout);
+  debounceTimeout = setTimeout(() => {
+    searchUsersDiscover(discoverInput.value);
+  }, 300);
+});
+
+async function searchUsersDiscover(query) {
+  const trimmed = query.trim();
+  if (!trimmed) {
+    discoverResults.innerHTML = '';
+    userMemesContainer.innerHTML = '';
+    return;
+  }
+  try {
+    const res = await fetch(`/search_users?q=${encodeURIComponent(trimmed)}`);
+    if (!res.ok) throw new Error('Network error');
+    const users = await res.json();
+    displayUsers(users);
+  } catch(e) {
+    discoverResults.textContent = 'Error loading users.';
+    userMemesContainer.innerHTML = '';
+  }
+}
+
+function displayUsers(users) {
+  discoverResults.innerHTML = '';
+  userMemesContainer.innerHTML = '';
+  if (users.length === 0) {
+    discoverResults.textContent = 'No users found.';
+    return;
+  }
+  users.forEach(user => {
+    const userDiv = document.createElement('div');
+    userDiv.classList.add('user-result');
+    userDiv.innerHTML = `
+      <div class="user-info">
+        <img src="${user.picture_url ? '/uploads/' + user.picture_url : '/static/default-profile.png'}" alt="${user.username}" />
+        <span class="user-name">${user.username}</span>
+      </div>
+      <button class="follow-btn ${user.is_following ? 'following' : ''}">
+        ${user.is_following ? 'Unfollow' : 'Follow'}
+      </button>
+    `;
+    userDiv.querySelector('.follow-btn').onclick = () => toggleUserFollow(user.username, userDiv);
+    userDiv.onclick = (e) => {
+      if (e.target !== userDiv.querySelector('.follow-btn')) showUserMemes(user.username);
+    };
+    discoverResults.appendChild(userDiv);
+  });
+}
+
+async function toggleUserFollow(username, userDiv) {
+  const btn = userDiv.querySelector('.follow-btn');
+  const isFollowing = btn.classList.contains('following');
+  const url = isFollowing ? `/unfollow/${username}` : `/follow/${username}`;
+  try {
+    const res = await fetch(url, {method: 'POST'});
+    const data = await res.json();
+    if(data.status === 'ok') {
+      btn.classList.toggle('following');
+      btn.textContent = isFollowing ? 'Follow' : 'Unfollow';
+    } else {
+      alert(data.message);
+    }
+  } catch(e) {
+    alert('Failed to update follow status.');
+  }
+}
+
+async function showUserMemes(username) {
+  userMemesContainer.innerHTML = `Loading memes by ${username}...`;
+  try {
+    const res = await fetch(`/user_memes/${username}`);
+    if (!res.ok) throw new Error('Network error');
+    const memes = await res.json();
+    if (!memes.length) {
+      userMemesContainer.innerHTML = 'No memes found.';
+      return;
+    }
+    const ul = document.createElement('ul');
+    for(let meme of memes) {
+      const li = document.createElement('li');
+      li.textContent = meme.title;
+      ul.appendChild(li);
+    }
+    userMemesContainer.innerHTML = '';
+    userMemesContainer.appendChild(ul);
+  } catch (e) {
+    userMemesContainer.innerHTML = 'Error loading memes.';
+  }
+}
+
+</script>
+</body>
+</html>
