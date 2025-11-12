@@ -244,4 +244,4 @@ def unfollow_user(followed_username):
     return jsonify({'status':'ok', 'message':'Unfollowed successfully'})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
